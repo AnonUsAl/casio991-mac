@@ -1,0 +1,8 @@
+# 构建中间产物（最终 .app 和 zip 保留在仓库里）
+SwiftApp/
+AppIcon.iconset/
+launch.log
+
+# 系统文件
+.DS_Store
+*.swp
