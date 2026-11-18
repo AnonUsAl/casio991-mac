@@ -104,7 +104,10 @@ final class LocalHTTPServer {
 }
 
 // MARK: - 主视图控制器
-final class ViewController: NSViewController, WKNavigationDelegate {
+final class ViewController: NSViewController, WKNavigationDelegate, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        log("JS: \(message.body)")
+    }
     private var webView: WKWebView!
     private var splash: NSView!
     private var splashStart: Date!
@@ -125,6 +128,15 @@ final class ViewController: NSViewController, WKNavigationDelegate {
         // WebView
         let config = WKWebViewConfiguration()
         config.preferences.javaScriptEnabled = true
+
+        // 诊断：捕获 JS 错误与 console，回传 Swift 写日志
+        let diag = WKUserScript(source: """
+            window.addEventListener('error', function(e){ window.webkit.messageHandlers.diag.postMessage('JS_ERROR: '+e.message); });
+            window.addEventListener('unhandledrejection', function(e){ window.webkit.messageHandlers.diag.postMessage('JS_REJECT: '+(e.reason&&e.reason.message||e.reason)); });
+        """, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        config.userContentController.addUserScript(diag)
+        config.userContentController.add(self, name: "diag")
+
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false
@@ -203,6 +215,14 @@ final class ViewController: NSViewController, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         log("page finished")
+        // 诊断：2 秒后回读页面真实状态
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self = self else { return }
+            self.webView.evaluateJavaScript("JSON.stringify({status:document.getElementById('status')?.textContent,errHidden:document.getElementById('error')?.hidden,errMsg:document.getElementById('error-message')?.textContent,sw:document.getElementById('screen')?.width})") { result, error in
+                if let e = error { log("EVAL_ERR: \(e.localizedDescription)") }
+                else if let s = result as? String { log("PAGE_STATE: \(s)") }
+            }
+        }
         let elapsed = Date().timeIntervalSince(splashStart) * 1000
         let remain = max(0, ViewController.minMs - elapsed) / 1000
         DispatchQueue.main.asyncAfter(deadline: .now() + remain) { [weak self] in
