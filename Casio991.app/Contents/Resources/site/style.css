@@ -475,4 +475,5 @@ kbd { background:#232329; }
 .pad-legends .legend-shift { color:var(--shift) !important; }
 .pad-legends .legend-alpha { color:var(--alpha) !important; }
 .pad-legends .legend-mode { color:#7fa8e0 !important; }
-.pad-lcd { background:#141417; }
+.pad-lcd { background:linear-gradient(#dae8e1,#c6dfd2) !important; border-color:#1b1c19 !important; }
+/* LCD 点阵为深绿墨水，需浅绿背光底才清晰（深色底会导致字看不见）*/
