@@ -35,7 +35,7 @@ PY
 iconutil -c icns "$ICONSET" -o "$MAC/SwiftApp/Contents/Resources/AppIcon.icns"
 
 echo "==> [3/5] swiftc 编译"
-swiftc -O main.swift -o "$MAC/SwiftApp/Contents/MacOS/Casio991" \
+swiftc -parse-as-library -O main.swift -o "$MAC/SwiftApp/Contents/MacOS/Casio991" \
   -framework Cocoa -framework WebKit 2>/dev/null
 
 echo "==> [4/5] 组装 .app 并签名"

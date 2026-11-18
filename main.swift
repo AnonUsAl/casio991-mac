@@ -145,8 +145,10 @@ final class ViewController: NSViewController, WKNavigationDelegate {
         let server = LocalHTTPServer(root: site)
         server.start()
         objc_setAssociatedObject(self, &AssociatedKeys.server, server, .OBJC_ASSOCIATION_RETAIN)
+        log("server started port=\(server.port)")
         if let url = URL(string: "http://127.0.0.1:\(server.port)/index.html") {
             webView.load(URLRequest(url: url))
+            log("webView load: \(url)")
         }
 
         // 超时兜底
@@ -200,6 +202,7 @@ final class ViewController: NSViewController, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        log("page finished")
         let elapsed = Date().timeIntervalSince(splashStart) * 1000
         let remain = max(0, ViewController.minMs - elapsed) / 1000
         DispatchQueue.main.asyncAfter(deadline: .now() + remain) { [weak self] in
@@ -227,18 +230,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        log("didFinishLaunching enter")
         let w = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 900, height: 760),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
         w.title = "fx-991CN X 科学计算器"
-        w.titlebarAppearsTransparent = true
         w.backgroundColor = NSColor(hex: 0x0B0B0D)
         w.contentViewController = ViewController()
+        w.setContentSize(NSSize(width: 900, height: 760))
         w.center()
         w.makeKeyAndOrderFront(nil)
         window = w
         NSApp.activate(ignoringOtherApps: true)
+        log("window shown: \(w.frame.size) content=\(w.contentView?.frame.size ?? .zero)")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
@@ -254,14 +259,32 @@ extension NSColor {
     }
 }
 
-// 使用标准 @main 入口：通过双击/LaunchServices 启动时比顶层 app.run() 更可靠
+// 使用标准 @main 入口
 @main
 struct Casio991App {
+    // 关键：NSApplication.delegate 是 weak，必须用静态强引用持有，
+    // 否则 delegate（及其 window）在 main() 返回后立即释放 → 进程在 Dock 但没窗口
+    static let delegate = AppDelegate()
+
     static func main() {
+        log("app main enter")
         let app = NSApplication.shared
-        let delegate = AppDelegate()
         app.delegate = delegate
         app.setActivationPolicy(.regular)
+        log("delegate set, run")
         app.run()
+        log("app run exited")
+    }
+}
+
+// 启动日志（便于排查双击无窗口问题）
+func log(_ msg: String) {
+    let line = "\(Date()) \(msg)\n"
+    if let handle = FileHandle(forWritingAtPath: "/tmp/casio991_launch.log") {
+        handle.seekToEndOfFile()
+        handle.write(line.data(using: .utf8)!)
+        handle.closeFile()
+    } else {
+        try? line.write(toFile: "/tmp/casio991_launch.log", atomically: true, encoding: .utf8)
     }
 }
