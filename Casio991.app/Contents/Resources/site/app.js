@@ -332,17 +332,11 @@ $('memory-file').addEventListener('change', async event => {
 
 // The source photo sits on white; flood-fill that backdrop to transparent inside the crop, once.
 function clearBackdrop(image) {
+	// 定制：原图键面为深色面板+白色按键，无需抠“浅色背景”。
+	// 原逻辑会把浅色按键从边缘连通误判为背景抠成透明，导致按键文字变淡看不清。
+	// 直接返回原图；LCD 区域仍由 drawSkin 的 blank 覆盖为实时画面。
 	const out=document.createElement('canvas');out.width=image.naturalWidth;out.height=image.naturalHeight;
-	const ctx=out.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);
-	const {x:x0,y:y0,width:w,height:h}=skin.crop,img=ctx.getImageData(x0,y0,w,h),d=img.data,seen=new Uint8Array(w*h),stack=[];
-	const light=i=>{const r=d[i*4],g=d[i*4+1],b=d[i*4+2];return Math.min(r,g,b)>200&&Math.max(r,g,b)-Math.min(r,g,b)<28;};
-	for(let x=0;x<w;x++)stack.push(x,(h-1)*w+x);
-	for(let y=0;y<h;y++)stack.push(y*w,y*w+w-1);
-	while(stack.length){
-		const i=stack.pop();if(seen[i]||!light(i))continue;seen[i]=1;d[i*4+3]=0;
-		const x=i%w;if(x>0)stack.push(i-1);if(x<w-1)stack.push(i+1);if(i>=w)stack.push(i-w);if(i<w*(h-1))stack.push(i+w);
-	}
-	ctx.putImageData(img,x0,y0);
+	const ctx=out.getContext('2d');ctx.drawImage(image,0,0);
 	return out;
 }
 
