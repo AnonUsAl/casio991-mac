@@ -88,8 +88,7 @@ export function lcdRaster(frame,contrast,mode,memory=null) {
 
 export function drawSkin(context,cover,lcdCanvas=null,{smooth=true}={}) {
 	const c=skin.crop, b=skin.blank;
-	context.imageSmoothingEnabled=true;
-	context.imageSmoothingQuality='high';
+	context.imageSmoothingEnabled=false; // 定制:关闭平滑,避免放大小字被插值成浅灰
 	context.drawImage(cover,c.x,c.y,c.width,c.height,0,0,skin.width,skin.height);
 	context.save();
 	context.beginPath();
