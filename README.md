@@ -10,6 +10,11 @@
 xattr -dr com.apple.quarantine /path/to/Casio991.app
 ```
 
+### 安装 / 更新 / 卸载
+
+- **安装或更新**：双击 `安装.command`——它会关闭旧版、彻底覆盖安装到「应用程序」，并校验是否为最新版（按键清晰）。
+- **彻底卸载**：双击 `卸载.command`——会把 app **连同计算记忆（WKWebView localStorage）、缓存一起移入废纸篓**（可恢复）。手动卸载只删 app 会残留这些数据。
+
 ## 特性
 
 - 原生 macOS 窗口，深色主题，与 Android 版一致的开屏署名
