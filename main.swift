@@ -254,8 +254,14 @@ extension NSColor {
     }
 }
 
-let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.setActivationPolicy(.regular)
-app.run()
+// 使用标准 @main 入口：通过双击/LaunchServices 启动时比顶层 app.run() 更可靠
+@main
+struct Casio991App {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = AppDelegate()
+        app.delegate = delegate
+        app.setActivationPolicy(.regular)
+        app.run()
+    }
+}
